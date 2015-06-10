@@ -120,7 +120,7 @@ def iofiles(argv):
       elif opt in ("-i", "--ifile"):
          inputfile = arg
    if inputfile == '':
-      inputfile="orca-ethane.log"
+      inputfile="orca-benzene.log"
    return (inputfile)
 
 #############################################################################################################
@@ -651,6 +651,9 @@ ProgramHeader()
 # Determine the name of the file to be read
 infile = iofiles(sys.argv[1:])
 
+reactant_mol = Molecule("Reactant",0)
+extractCoordinates(infile, reactant_mol, verbosity = 2)
+
 # print("Number of Atoms: ", reactant_mol.numatoms(), "Multiplicity: ", reactant_mol.mult)
 
 # print(molecule)
@@ -659,73 +662,5 @@ infile = iofiles(sys.argv[1:])
 
 # print(reactant_mol.gaussString())
 
-# print("Bonds:")
-# for i in reactant_mol.bonds:
-#   print(i)
-#
-# print("")
-# print("Angles:")
-# for i in reactant_mol.angles:
-#   print(i)
-#
-# print("")
-# print("Angles in degrees:")
-# for i in range(len(reactant_mol.angles)):
-#   print(math.degrees(reactant_mol.bondangle(i)))
-#
-# print("")
-# print("Dihedrals:")
-# for i in reactant_mol.dihedrals:
-#   print(i)
-#
-# print("")
-# print("Dihedral angles in degrees:")
-# for i in range(len(reactant_mol.dihedrals)):
-#   print(math.degrees(reactant_mol.dihedralangle(i)))
-
-# print("")
-# print("Bond Stretches:")
-# for i in reactant_mol.stretch:
-#   print(i)
-#
-# print("")
-# print("1-3 Bond Stretches:")
-# for i in reactant_mol.str13:
-#   print(i)
-#
-# print("")
-# print("Angle Bends:")
-# for i in reactant_mol.bend:
-#   print(i)
-#
-# print("")
-# print("Dihedral Torsions:")
-# for i in reactant_mol.tors:
-#   print(i)
-
-reactant_mol = Molecule("Reactant",0)
-extractCoordinates("g09-dielsalder-r.log", reactant_mol, verbosity = 2)
-
-product_mol = Molecule("Product",0)
-extractCoordinates("g09-dielsalder-p.log", product_mol, verbosity = 2)
-
-# print("\nCartesian Coordinates (as one list):")
-# print(reactant_mol.cartesianCoordinates())
-
-print("\nForce Field Energy:")
-print(reactant_mol.FFEnergy(reactant_mol.cartesianCoordinates()))
-
-print("\nDistort Geometry and print energy again:")
-coordinates2optimiseR = reactant_mol.cartesianCoordinates()
-coordinates2optimiseP = product_mol.cartesianCoordinates()
-
-coordinates2optimiseR = (numpy.array(coordinates2optimiseR)+(numpy.array(coordinates2optimiseP))/2.0)
-
-print(reactant_mol.FFEnergy(coordinates2optimiseR))
-
-print("\nGeometry Optimizer:")
-xopt = scipy.optimize.fmin_bfgs(reactant_mol.FFEnergy, coordinates2optimiseR, gtol=0.00005)
-print("\nOptimized Geometry:")
-print(xopt)
 
 ProgramFooter()
