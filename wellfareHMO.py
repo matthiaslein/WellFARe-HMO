@@ -4,6 +4,7 @@ import sys
 import getopt
 import math
 import time
+import argparse
 from importlib.util import find_spec
 import wellfareSTO
 
@@ -97,14 +98,6 @@ if not found:
     ProgramError("Module scipy is required")
     ProgramAbort()
 import scipy.optimize
-
-# Check for argparse, exit immediately if not available
-module_loader = find_spec('argparse')
-found = module_loader is not None
-if not found:
-    ProgramError("Module argparse is required")
-    ProgramAbort()
-import argparse
 
 
 def iofiles(argv):
@@ -244,6 +237,28 @@ SymbolToEN = {
     "Mt": 1.30, "Ds": 1.30, "Rg": 1.30, "Cn": 1.30, "Uut": 1.30, "Uuq": 1.30,
     "Uup": 1.30, "Uuh": 1.30, "Uus": 1.30, "Uuo": 1.30}
 
+# Define dictionary to convert atomic symbols to STO exponents for s functions
+SymbolToSTOexpS = {
+    "H": 1.200, "He": 1.688, "Li": 0.650, "Be": 0.975, "B": 1.300, "C": 1.625,
+}
+
+# Define dictionary to convert atomic symbols to STO exponents for p functions
+SymbolToSTOexpP = {
+    "Li": 0.65, "Be": 0.975, "B": 1.300, "C": 1.625,
+}
+
+# Define dictionary to convert atomic symbols to ionisation energies in Extended Hückel Hamiltonians
+# Here for s electrons in hartrees
+SymbolToEHTieS = {
+    "H": -0.5000, "He": -0.8599, "Li": -0.1984, "Be": -0.3675, "B": -0.5586, "C": -0.7144,
+}
+
+# Define dictionary to convert atomic symbols to ionisation energies in Extended Hückel Hamiltonians
+# Here for p electrons in hartrees
+SymbolToEHTieP = {
+    "Li": -0.1286, "Be": -0.2205, "B": -0.3124, "C": -0.3921,
+}
+
 
 #############################################################################################################
 # Do *not* define constants or conversion factors below here
@@ -266,37 +281,46 @@ def isInt(s):
 class STO:
     """ A Slater Type Orbital with an atomic symbol quantum numbers n and l, and an exponent"""
 
-    def __init__(self, sym, n, l, exp):
-        """ (STO, str, number, number, number) -> NoneType
+    def __init__(self, sym, n, l, exp=None, ie=None):
+        """ (STO, str, number, number, number, number) -> NoneType
 
-        Create an STO with (string) symbol sym,
-        and (int) quantum numbers n and l.
-        exponent exp is then set
-        automatically according to symbol.
+        Create an STO with (int) quantum numbers n and l.
+        Exponent exp and ionisation energy are set automatically according to
+        symbol if not explicitly specified.
         """
 
-        self.symbol = sym
-        self.exp = SymbolToNumber[sym]
+        self.n = n
+        self.l = l
+        if l == 0:
+            self.exp = SymbolToSTOexpS[sym]
+            self.ie = SymbolToEHTieS[sym]
+        elif l == 1:
+            self.exp = SymbolToSTOexpP[sym]
+            self.ie = SymbolToEHTieS[sym]
+        else:
+            ProgramError("This angular momentum is not (yet) implemented")
+            ProgramAbort()
 
     def __str__(self):
         """ (STO) -> str
 
         Return a string representation of this STO in this format:
 
-          (SYMBOL, n, l, exp)
+          (n, l, exp, ie)
         """
 
-        return '({0}, {1}, {2}, {3})'.format(self.symbol, self.n, self.l, self.exp)
+        return '({0}, {1}, {2}, {3})'.format(self.n, self.l, self.exp, self.ie)
 
     def __repr__(self):
         """ (STO) -> str
 
         Return a string representation of this STO in this format:"
 
-          STO("SYMBOL", n, l, exp)
+          STO(n, l, exp, ie)
         """
 
-        return '("{0}", {1}, {2}, {3})'.format(self.symbol, self.n, self.l, self.exp)
+        return '({0}, {1}, {2}, {3})'.format(self.n, self.l, self.exp, self.ie)
+
 
 #############################################################################################################
 # Atom class and class methods to be defined below
@@ -305,29 +329,52 @@ class STO:
 class Atom:
     """ An atom with an atomic symbol and cartesian coordinates"""
 
-    def __init__(self, sym, x, y, z):
+    def __init__(self, sym, x, y, z, basis="eht"):
         """ (Atom, int, str, number, number, number) -> NoneType
 
         Create an Atom with (string) symbol sym,
         and (float) cartesian coordinates (x, y, z).
         (int) charge charge and (float) mass mass are set
-        automatically according to symbol.
+        automatically according to symbol. STO basis functions
+        are added automatically according to choice
         """
 
         self.symbol = sym
         self.charge = SymbolToNumber[sym]
         self.mass = SymbolToMass[sym]
         self.coord = [x, y, z]
+        self.basis = []
+
+        if sym == "H":
+            self.basis.append(STO(sym, 1, 0))
+        elif sym == "He":
+            self.basis.append(STO(sym, 1, 0))
+        elif sym == "Li":
+            self.basis.append(STO(sym, 2, 0))
+            self.basis.append(STO(sym, 2, 1))
+        elif sym == "Be":
+            self.basis.append(STO(sym, 2, 0))
+            self.basis.append(STO(sym, 2, 1))
+        elif sym == "B":
+            self.basis.append(STO(sym, 2, 0))
+            self.basis.append(STO(sym, 2, 1))
+        elif sym == "C":
+            self.basis.append(STO(sym, 2, 0))
+            self.basis.append(STO(sym, 2, 1))
+
 
     def __str__(self):
         """ (Atom) -> str
 
         Return a string representation of this Atom in this format:
 
-          (SYMBOL, X, Y, Z)
+          (SYMBOL, X, Y, Z, [basis])
         """
+        s = ""
+        for i in self.basis:
+            s = s + i.__str__()
 
-        return '({0}, {1}, {2}, {3})'.format(self.symbol, self.coord[0], self.coord[1], self.coord[2])
+        return '({0}, {1}, {2}, {3}, {4})'.format(self.symbol, self.coord[0], self.coord[1], self.coord[2], s)
 
     def __repr__(self):
         """ (Atom) -> str
@@ -595,7 +642,7 @@ class Molecule:
           Returns a string containing cartesian coordinates in Gaussian format
         """
 
-        s = "\n" + self.name + "\n\n" + str(molecule.charge) + " " + str(molecule.mult) + "\n"
+        s = "\n" + self.name + "\n\n" + str(self.charge) + " " + str(self.mult) + "\n"
         for i in self.atoms:
             t = "{:<3} {: .8f} {: .8f} {: .8f}\n".format(i.symbol, i.coord[0], i.coord[1], i.coord[2])
             s = s + t
@@ -730,13 +777,13 @@ infile = iofiles(args.file)
 hmo_mol = Molecule("HMO Molecule")
 extractCoordinates(infile, hmo_mol, verbosity=args.verbosity)
 
-# print("Number of Atoms: ", reactant_mol.numatoms(), "Multiplicity: ", reactant_mol.mult)
+print("Number of Atoms: ", hmo_mol.numatoms(), "Multiplicity: ", hmo_mol.mult)
 
-# print(molecule)
-# print("Molecular mass = ", reactant_mol.mass())
-# reactant_mol.orient()
+print(hmo_mol)
+print("Molecular mass = ", hmo_mol.mass())
+hmo_mol.orient()
 
-# print(reactant_mol.gaussString())
+print(hmo_mol.gaussString())
 
 
 ProgramFooter()
