@@ -89,7 +89,7 @@ found = module_loader is not None
 if not found:
     ProgramError("Module numpy is required")
     ProgramAbort()
-import numpy
+import numpy as np
 
 # Check for scipy, exit immediately if not available
 module_loader = find_spec('scipy')
@@ -362,7 +362,6 @@ class Atom:
             self.basis.append(STO(sym, 2, 0))
             self.basis.append(STO(sym, 2, 1))
 
-
     def __str__(self):
         """ (Atom) -> str
 
@@ -573,13 +572,13 @@ class Molecule:
         inertiaTensor.append([Ixx, Ixy, Ixz])
         inertiaTensor.append([Iyx, Iyy, Iyz])
         inertiaTensor.append([Izx, Izy, Izz])
-        inertiaTensor = numpy.matrix(inertiaTensor)
+        inertiaTensor = np.matrix(inertiaTensor)
 
         # Diagonalise inertia tensor
-        inertiaMoments, inertialAxes = numpy.linalg.eig(inertiaTensor)
+        inertiaMoments, inertialAxes = np.linalg.eig(inertiaTensor)
 
         # Orthogonalise eigenvectors (only sometimes necessary)...
-        inertialAxes, r = numpy.linalg.qr(inertialAxes)
+        inertialAxes, r = np.linalg.qr(inertialAxes)
 
         # Sort moments from highest to lowest
         idx = inertiaMoments.argsort()[::-1]
@@ -589,9 +588,9 @@ class Molecule:
         # Transform molecular coordinates into new frame of principal axes of inertia
         for i in self.atoms:
             vector = [i.coord[0], i.coord[1], i.coord[2]]
-            vector = numpy.matrix(vector)
-            vector = numpy.matrix.transpose(inertialAxes).dot(numpy.matrix.transpose(vector))
-            vector = numpy.array(vector).flatten().tolist()
+            vector = np.matrix(vector)
+            vector = np.matrix.transpose(inertialAxes).dot(np.matrix.transpose(vector))
+            vector = np.array(vector).flatten().tolist()
             i.coord[0] = vector[0]
             i.coord[1] = vector[1]
             i.coord[2] = vector[2]
@@ -649,12 +648,39 @@ class Molecule:
         s = s + "\n"
         return s
 
-    def HMOEnergy(self, cartCoordinates):
+    def HMOEnergy(self, cartCoordinates, K = 1.75):
         """ (Molecule) -> number (extended Hueckel aka Tight Binding energy)
 
           Returns a number containing the molecular energy according to the current extended Hueckel aka Tight Binding
           definition at structure specified by the provided cartesian coordinates.
         """
+
+        molbasis = []
+        for i in self.atoms:
+            for j in i.basis:
+                for k in range(-1 * j.l, j.l + 1):
+                    molbasis.append([j.n, j.l, k, j.exp, i.coord[0], i.coord[1], i.coord[2], j.ie])
+
+        for i in molbasis:
+            print(i)
+
+        overlap = np.zeros((len(molbasis), len(molbasis)))
+        for i in range(0, len(molbasis)):
+            for j in range(0, len(molbasis)):
+                overlap[i][j] = wellfareSTO.SlaterOverlapCartesian(molbasis[i][0], molbasis[i][1], molbasis[i][2],
+                                                                   molbasis[i][3],
+                                                                   molbasis[i][4], molbasis[i][5], molbasis[i][6],
+                                                                   molbasis[j][0],
+                                                                   molbasis[j][1], molbasis[j][2], molbasis[j][3],
+                                                                   molbasis[j][4],
+                                                                   molbasis[j][5], molbasis[j][6])
+        hamiltonian = np.zeros((len(molbasis), len(molbasis)))
+        for i in range(0, len(molbasis)):
+            for j in range(0, len(molbasis)):
+                hamiltonian[i][j] = K * overlap[i][j] * ((molbasis[i][7]+molbasis[j][7])/2)
+
+        MOEnergies, MOVectors = np.linalg.eig(hamiltonian)
+        print(MOEnergies,MOVectors)
 
         energy = 0.0
 
@@ -777,13 +803,12 @@ infile = iofiles(args.file)
 hmo_mol = Molecule("HMO Molecule")
 extractCoordinates(infile, hmo_mol, verbosity=args.verbosity)
 
-print("Number of Atoms: ", hmo_mol.numatoms(), "Multiplicity: ", hmo_mol.mult)
-
-print(hmo_mol)
-print("Molecular mass = ", hmo_mol.mass())
+# print("Number of Atoms: ", hmo_mol.numatoms(), "Multiplicity: ", hmo_mol.mult)
+#
+# print(hmo_mol)
+# print("Molecular mass = ", hmo_mol.mass())
 hmo_mol.orient()
 
-print(hmo_mol.gaussString())
-
+hmo_mol.HMOEnergy([0])
 
 ProgramFooter()
