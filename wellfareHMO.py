@@ -99,25 +99,6 @@ if not found:
     ProgramAbort()
 import scipy.optimize
 
-
-def iofiles(argv):
-    inputfile = ''
-    try:
-        opts, args = getopt.getopt(argv, "hi:o:", ["ifile=", "ofile="])
-    except getopt.GetoptError:
-        print('./wellfareFF.py -i <inputfile>')
-        sys.exit(2)
-    for opt, arg in opts:
-        if opt == '-h':
-            print('./wellfareFF.py -i <inputfile>')
-            sys.exit()
-        elif opt in ("-i", "--ifile"):
-            inputfile = arg
-    if inputfile == '':
-        inputfile = "orca-benzene.log"
-    return (inputfile)
-
-
 #############################################################################################################
 # This section is for the definition of *all* constants and conversion factors
 #############################################################################################################
@@ -296,7 +277,7 @@ class STO:
             self.ie = SymbolToEHTieS[sym]
         elif l == 1:
             self.exp = SymbolToSTOexpP[sym]
-            self.ie = SymbolToEHTieS[sym]
+            self.ie = SymbolToEHTieP[sym]
         else:
             ProgramError("This angular momentum is not (yet) implemented")
             ProgramAbort()
@@ -372,8 +353,10 @@ class Atom:
         s = ""
         for i in self.basis:
             s = s + i.__str__()
+            if i != self.basis[-1]:
+                s = s + " "
 
-        return '({0}, {1}, {2}, {3}, {4})'.format(self.symbol, self.coord[0], self.coord[1], self.coord[2], s)
+        return '({0}, ({1}, {2}, {3}), ({4})'.format(self.symbol, self.coord[0], self.coord[1], self.coord[2], s)
 
     def __repr__(self):
         """ (Atom) -> str
@@ -648,7 +631,7 @@ class Molecule:
         s = s + "\n"
         return s
 
-    def HMOEnergy(self, cartCoordinates, K = 1.75):
+    def HMOEnergy(self, cartCoordinates, K = 1.75, verbosity=0):
         """ (Molecule) -> number (extended Hueckel aka Tight Binding energy)
 
           Returns a number containing the molecular energy according to the current extended Hueckel aka Tight Binding
@@ -661,12 +644,12 @@ class Molecule:
                 for k in range(-1 * j.l, j.l + 1):
                     molbasis.append([j.n, j.l, k, j.exp, i.coord[0], i.coord[1], i.coord[2], j.ie])
 
-        for i in molbasis:
-            print(i)
+        # for i in molbasis:
+        #     print(i)
 
         overlap = np.zeros((len(molbasis), len(molbasis)))
         for i in range(0, len(molbasis)):
-            for j in range(0, len(molbasis)):
+            for j in range(i, len(molbasis)):
                 overlap[i][j] = wellfareSTO.SlaterOverlapCartesian(molbasis[i][0], molbasis[i][1], molbasis[i][2],
                                                                    molbasis[i][3],
                                                                    molbasis[i][4], molbasis[i][5], molbasis[i][6],
@@ -674,13 +657,52 @@ class Molecule:
                                                                    molbasis[j][1], molbasis[j][2], molbasis[j][3],
                                                                    molbasis[j][4],
                                                                    molbasis[j][5], molbasis[j][6])
+                overlap[j][i] = overlap[i][j]
+
+        if verbosity >= 3:
+            print("\nOverlap Matrix")
+            np.set_printoptions(suppress=True)
+            np.set_printoptions(formatter={'float': '{: 0.4f}'.format})
+            print(overlap)
+
         hamiltonian = np.zeros((len(molbasis), len(molbasis)))
         for i in range(0, len(molbasis)):
-            for j in range(0, len(molbasis)):
-                hamiltonian[i][j] = K * overlap[i][j] * ((molbasis[i][7]+molbasis[j][7])/2)
+            for j in range(i, len(molbasis)):
+                if i == j:
+                    # Use Valence State Ionisation Energies for diagonal elements
+                    hamiltonian[i][j] = molbasis[i][7]
+                else:
+                    # Use Wolfsberg-Helmholtz for off-diagonal elements
+                    hamiltonian[i][j] = K * overlap[i][j] * ((molbasis[i][7]+molbasis[j][7])/2)
+                    hamiltonian[j][i] = hamiltonian[i][j]
+        if verbosity >= 3:
+            print("\nHamiltonian Matrix")
+            print(hamiltonian)
 
-        MOEnergies, MOVectors = np.linalg.eig(hamiltonian)
-        print(MOEnergies,MOVectors)
+        eigvalS, eigvecS= np.linalg.eig(overlap)
+        # print(eigvalS)
+        xMatrix = np.zeros((len(molbasis), len(molbasis)))
+        for i in range(0,len(eigvalS)):
+            xMatrix[i][i] = eigvalS[i] ** (-1.0/2.0)
+        # print("\ns^1/2 Matrix")
+        # print(xMatrix)
+        xMatrix = np.dot(np.dot(eigvecS,xMatrix),np.transpose(eigvecS))
+        # print("\nX Matrix")
+        # print(xMatrix)
+
+        # print("\nUnity")
+        # print(np.dot(np.dot(xMatrix,overlap),np.transpose(xMatrix)))
+
+        acthamiltonian = np.dot(np.dot(xMatrix,hamiltonian),np.transpose(xMatrix))
+        print("\nOrthogonalised Hamiltonian Matrix")
+        print(acthamiltonian)
+
+        MOEnergies, transfMOVectors = np.linalg.eig(acthamiltonian)
+        if verbosity >= 3:
+            print("\nMO Energies")
+            print(MOEnergies)
+            print("\nTransformed MO Vectors (i.e. Coefficients)")
+            print(transfMOVectors)
 
         energy = 0.0
 
@@ -797,11 +819,8 @@ args = parser.parse_args()
 # Print GPL v3 statement and program header
 ProgramHeader()
 
-# Determine the name of the file to be read
-infile = iofiles(args.file)
-
 hmo_mol = Molecule("HMO Molecule")
-extractCoordinates(infile, hmo_mol, verbosity=args.verbosity)
+extractCoordinates(args.file, hmo_mol, verbosity=args.verbosity)
 
 # print("Number of Atoms: ", hmo_mol.numatoms(), "Multiplicity: ", hmo_mol.mult)
 #
@@ -809,6 +828,6 @@ extractCoordinates(infile, hmo_mol, verbosity=args.verbosity)
 # print("Molecular mass = ", hmo_mol.mass())
 hmo_mol.orient()
 
-hmo_mol.HMOEnergy([0])
+hmo_mol.HMOEnergy([0], verbosity=args.verbosity)
 
 ProgramFooter()
