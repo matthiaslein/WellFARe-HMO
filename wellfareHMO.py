@@ -698,11 +698,12 @@ class Molecule:
         print(acthamiltonian)
 
         MOEnergies, transfMOVectors = np.linalg.eig(acthamiltonian)
+        #MOEnergies, transfMOVectors = scipy.linalg.eig(hamiltonian,b=overlap)
         if verbosity >= 3:
             print("\nMO Energies")
             print(MOEnergies)
-            print("\nTransformed MO Vectors (i.e. Coefficients)")
-            print(transfMOVectors)
+            # print("\nTransformed MO Vectors (i.e. Coefficients)")
+            # print(transfMOVectors)
 
         energy = 0.0
 
