@@ -14,7 +14,7 @@ def em(m1, m2):
         value = value * 1
     else:
         value = value * np.sign(m2)
-    # print("em {} {} {: .20E}".format(m1, m2, value))
+        # print("em {} {} {: .20E}".format(m1, m2, value))
     return value
 
 
@@ -46,7 +46,7 @@ def clm(l1, l2, L, m1, m2, M):
         value = value * interim * kd
     else:
         value = 0.0
-    # print("clm {} {} {} {} {} {}: {: .20E}".format(l1, l2, L, m1, m2, M, value))
+        # print("clm {} {} {} {} {} {}: {: .20E}".format(l1, l2, L, m1, m2, M, value))
     return value
 
 
@@ -81,7 +81,7 @@ def tlm(a, l1, m1, l2, m2, theta, phi):
                     kd5 = 1
                 else:
                     kd5 = 0
-                # in1 = em(m1, 0) ** (kd4)
+                    # in1 = em(m1, 0) ** (kd4)
                 in1 = em(i * y1 + y2, m1) ** (kd4)
                 in2 = clm(l1, l2, L, i * y1, y2, i * y1 + y2)
                 in3 = clm(l1, l2, L, a, -a, 0)
@@ -90,7 +90,7 @@ def tlm(a, l1, m1, l2, m2, theta, phi):
                 Lvalue.append(in1 * in2 * in3 * in4 * in5)
             ivalue.append(math.fsum(Lvalue))
         value = math.fsum(ivalue) * (2 * ((-1) ** (y1 + y2))) / ((1 + kd1) * np.sqrt((1 + kd2) * (1 + kd3)))
-    # print("tlm {} {} {} {} {} {} {}: {: .20E}".format(a, l1, m1, l2, m2, theta, phi, value))
+        # print("tlm {} {} {} {} {} {} {}: {: .20E}".format(a, l1, m1, l2, m2, theta, phi, value))
     return value
 
 
@@ -100,7 +100,7 @@ def slm(l1, m1, theta, phi):
         value = 0.0
     else:
         value = plm(l1, abs(m1), theta) * Phi(m1, phi)
-    # print("slm {} {} {} {}: {: .20E}".format(l1, m1, theta, phi, value))
+        # print("slm {} {} {} {}: {: .20E}".format(l1, m1, theta, phi, value))
     return value
 
 
@@ -114,7 +114,7 @@ def Phi(m1, phi):
         value = value * np.cos(abs(m1) * phi)
     else:
         value = value * np.sin(abs(m1) * phi)
-    # print("Phi {} {}: {: .20E}".format(m1, phi, value))
+        # print("Phi {} {}: {: .20E}".format(m1, phi, value))
     return value
 
 
@@ -152,7 +152,7 @@ def An3(k1, k, p):
         for j in range(k1 - k - 1, k1 - 1 + 1):
             value.append((p ** j) / (scipy.misc.factorial(j - k1 + k + 1)))
         value = math.fsum(value) * scipy.misc.factorial(k) * np.exp(-p)
-    # print("An3 ", k1, k, p, " :", value)
+        # print("An3 ", k1, k, p, " :", value)
     return value
 
 
@@ -171,7 +171,7 @@ def Bn3(k, p):
             value = math.fsum(value) * -2.0
     else:
         value = (((-1) ** (k + 1)) * An(k, -p)) - An(k, p)
-    # print("Bn3 ", k, p, " :", value)
+        # print("Bn3 ", k, p, " :", value)
     return value
 
 
@@ -179,7 +179,7 @@ def Fmn(m, n1, n2):
     value = []
     for sigma in range(int(((m - n1) + abs(m - n1)) / 2), min(m, n2) + 1):
         value.append(((-1) ** sigma) * scipy.special.binom(n1, m - sigma) * scipy.special.binom(n2, sigma))
-    # print("Fmn ",m ,n1, n2, " :", math.fsum(value))
+        # print("Fmn ",m ,n1, n2, " :", math.fsum(value))
     return math.fsum(value)
 
 
@@ -239,7 +239,7 @@ def SlaterOverlap(n1, l1, m1, zeta1, n2, l2, m2, zeta2, r, theta, phi):
     S = []
     for lambda_ in range(0, min(l1, l2) + 1):
         S.append(tlm(lambda_, l1, m1, l2, m2, theta, phi) * overlap(n1, l1, n2, l2, lambda_, p, t))
-    # print(S)
+        # print(S)
     return math.fsum(S)
 
 
@@ -256,10 +256,10 @@ def SlaterOverlapCartesian(n1, l1, m1, zeta1, x1, y1, z1, n2, l2, m2, zeta2, x2,
         theta = 0.0
     else:
         theta = np.arccos(z / r)
-    # print("")
-    # print("{: .3f} {: .3f} {: .3f}".format(x, y, z))
-    # print("{: .3f} {: .3f} {: .3f}".format(r, np.degrees(theta), np.degrees(phi)))
-    # print("{: .8f} {: .8f} {: .8f}".format(r, theta, phi))
+        # print("")
+        # print("{: .3f} {: .3f} {: .3f}".format(x, y, z))
+        # print("{: .3f} {: .3f} {: .3f}".format(r, np.degrees(theta), np.degrees(phi)))
+        # print("{: .8f} {: .8f} {: .8f}".format(r, theta, phi))
     return SlaterOverlap(n1, l1, m1, zeta1, n2, l2, m2, zeta2, r, theta, phi)
 
 

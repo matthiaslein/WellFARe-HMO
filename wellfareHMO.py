@@ -500,83 +500,84 @@ class Molecule:
 
         self.atoms[n].mass = m
 
-    def orient(self):
-        """ (Molecule) -> NoneType
-
-        Translate centre of mass to coordinate origin and
-        (re-)Orient the molecule along the principal axes of inertia.
-        """
-
-        # The molecular center of mass
-        xValue = 0.0
-        yValue = 0.0
-        zValue = 0.0
-        for i in self.atoms:
-            xValue = xValue + (i.mass * i.coord[0])
-            yValue = yValue + (i.mass * i.coord[1])
-            zValue = zValue + (i.mass * i.coord[2])
-        xValue = xValue / (self.mass())
-        yValue = yValue / (self.mass())
-        zValue = zValue / (self.mass())
-
-        # Translate whole molecule into the center of mass reference frame
-        for i in self.atoms:
-            i.coord[0] = i.coord[0] - xValue
-            i.coord[1] = i.coord[1] - yValue
-            i.coord[2] = i.coord[2] - zValue
-
-        # Build inertia tensor
-        inertiaTensor = []
-        Ixx = 0.0
-        Ixy = 0.0
-        Ixz = 0.0
-        Iyx = 0.0
-        Iyy = 0.0
-        Iyz = 0.0
-        Izx = 0.0
-        Izy = 0.0
-        Izz = 0.0
-        for i in self.atoms:
-            Ixx = Ixx + (
-                i.mass * (
-                    (Ang2Bohr(i.coord[1]) * Ang2Bohr(i.coord[1])) + (Ang2Bohr(i.coord[2]) * Ang2Bohr(i.coord[2]))))
-            Ixy = Ixy - i.mass * Ang2Bohr(i.coord[0]) * Ang2Bohr(i.coord[1])
-            Ixz = Ixz - i.mass * Ang2Bohr(i.coord[0]) * Ang2Bohr(i.coord[2])
-            Iyx = Iyx - i.mass * Ang2Bohr(i.coord[1]) * Ang2Bohr(i.coord[0])
-            Iyy = Iyy + (
-                i.mass * (
-                    (Ang2Bohr(i.coord[0]) * Ang2Bohr(i.coord[0])) + (Ang2Bohr(i.coord[2]) * Ang2Bohr(i.coord[2]))))
-            Iyz = Iyz - i.mass * Ang2Bohr(i.coord[1]) * Ang2Bohr(i.coord[2])
-            Izx = Izx - i.mass * Ang2Bohr(i.coord[2]) * Ang2Bohr(i.coord[0])
-            Izy = Izy - i.mass * Ang2Bohr(i.coord[2]) * Ang2Bohr(i.coord[1])
-            Izz = Izz + (
-                i.mass * (
-                    (Ang2Bohr(i.coord[0]) * Ang2Bohr(i.coord[0])) + (Ang2Bohr(i.coord[1]) * Ang2Bohr(i.coord[1]))))
-        inertiaTensor.append([Ixx, Ixy, Ixz])
-        inertiaTensor.append([Iyx, Iyy, Iyz])
-        inertiaTensor.append([Izx, Izy, Izz])
-        inertiaTensor = np.matrix(inertiaTensor)
-
-        # Diagonalise inertia tensor
-        inertiaMoments, inertialAxes = np.linalg.eig(inertiaTensor)
-
-        # Orthogonalise eigenvectors (only sometimes necessary)...
-        inertialAxes, r = np.linalg.qr(inertialAxes)
-
-        # Sort moments from highest to lowest
-        idx = inertiaMoments.argsort()[::-1]
-        inertiaMoments = inertiaMoments[idx]
-        inertialAxes = inertialAxes[:, idx]
-
-        # Transform molecular coordinates into new frame of principal axes of inertia
-        for i in self.atoms:
-            vector = [i.coord[0], i.coord[1], i.coord[2]]
-            vector = np.matrix(vector)
-            vector = np.matrix.transpose(inertialAxes).dot(np.matrix.transpose(vector))
-            vector = np.array(vector).flatten().tolist()
-            i.coord[0] = vector[0]
-            i.coord[1] = vector[1]
-            i.coord[2] = vector[2]
+    # Discovered that this does something funny to the striucture! Don't use!!
+    # def orient(self):
+    #     """ (Molecule) -> NoneType
+    #
+    #     Translate centre of mass to coordinate origin and
+    #     (re-)Orient the molecule along the principal axes of inertia.
+    #     """
+    #
+    #     # The molecular center of mass
+    #     xValue = 0.0
+    #     yValue = 0.0
+    #     zValue = 0.0
+    #     for i in self.atoms:
+    #         xValue = xValue + (i.mass * i.coord[0])
+    #         yValue = yValue + (i.mass * i.coord[1])
+    #         zValue = zValue + (i.mass * i.coord[2])
+    #     xValue = xValue / (self.mass())
+    #     yValue = yValue / (self.mass())
+    #     zValue = zValue / (self.mass())
+    #
+    #     # Translate whole molecule into the center of mass reference frame
+    #     for i in self.atoms:
+    #         i.coord[0] = i.coord[0] - xValue
+    #         i.coord[1] = i.coord[1] - yValue
+    #         i.coord[2] = i.coord[2] - zValue
+    #
+    #     # Build inertia tensor
+    #     inertiaTensor = []
+    #     Ixx = 0.0
+    #     Ixy = 0.0
+    #     Ixz = 0.0
+    #     Iyx = 0.0
+    #     Iyy = 0.0
+    #     Iyz = 0.0
+    #     Izx = 0.0
+    #     Izy = 0.0
+    #     Izz = 0.0
+    #     for i in self.atoms:
+    #         Ixx = Ixx + (
+    #             i.mass * (
+    #                 (Ang2Bohr(i.coord[1]) * Ang2Bohr(i.coord[1])) + (Ang2Bohr(i.coord[2]) * Ang2Bohr(i.coord[2]))))
+    #         Ixy = Ixy - i.mass * Ang2Bohr(i.coord[0]) * Ang2Bohr(i.coord[1])
+    #         Ixz = Ixz - i.mass * Ang2Bohr(i.coord[0]) * Ang2Bohr(i.coord[2])
+    #         Iyx = Iyx - i.mass * Ang2Bohr(i.coord[1]) * Ang2Bohr(i.coord[0])
+    #         Iyy = Iyy + (
+    #             i.mass * (
+    #                 (Ang2Bohr(i.coord[0]) * Ang2Bohr(i.coord[0])) + (Ang2Bohr(i.coord[2]) * Ang2Bohr(i.coord[2]))))
+    #         Iyz = Iyz - i.mass * Ang2Bohr(i.coord[1]) * Ang2Bohr(i.coord[2])
+    #         Izx = Izx - i.mass * Ang2Bohr(i.coord[2]) * Ang2Bohr(i.coord[0])
+    #         Izy = Izy - i.mass * Ang2Bohr(i.coord[2]) * Ang2Bohr(i.coord[1])
+    #         Izz = Izz + (
+    #             i.mass * (
+    #                 (Ang2Bohr(i.coord[0]) * Ang2Bohr(i.coord[0])) + (Ang2Bohr(i.coord[1]) * Ang2Bohr(i.coord[1]))))
+    #     inertiaTensor.append([Ixx, Ixy, Ixz])
+    #     inertiaTensor.append([Iyx, Iyy, Iyz])
+    #     inertiaTensor.append([Izx, Izy, Izz])
+    #     inertiaTensor = np.matrix(inertiaTensor)
+    #
+    #     # Diagonalise inertia tensor
+    #     inertiaMoments, inertialAxes = np.linalg.eig(inertiaTensor)
+    #
+    #     # Orthogonalise eigenvectors (only sometimes necessary)...
+    #     inertialAxes, r = np.linalg.qr(inertialAxes)
+    #
+    #     # Sort moments from highest to lowest
+    #     idx = inertiaMoments.argsort()[::-1]
+    #     inertiaMoments = inertiaMoments[idx]
+    #     inertialAxes = inertialAxes[:, idx]
+    #
+    #     # Transform molecular coordinates into new frame of principal axes of inertia
+    #     for i in self.atoms:
+    #         vector = [i.coord[0], i.coord[1], i.coord[2]]
+    #         vector = np.matrix(vector)
+    #         vector = np.matrix.transpose(inertialAxes).dot(np.matrix.transpose(vector))
+    #         vector = np.array(vector).flatten().tolist()
+    #         i.coord[0] = vector[0]
+    #         i.coord[1] = vector[1]
+    #         i.coord[2] = vector[2]
 
     def cartesianCoordinates(self):
         """ (Molecule) ->
@@ -641,9 +642,20 @@ class Molecule:
         molbasis = []
         for i in self.atoms:
             for j in i.basis:
-                for k in range(-1 * j.l, j.l + 1):
+                # for k in range(-1 * j.l, j.l + 1):
+                #     molbasis.append([j.n, j.l, k, j.exp, i.coord[0], i.coord[1], i.coord[2], j.ie])
+
+                for k in range(0, -1 * j.l -1, -1):
+                    molbasis.append([j.n, j.l, k, j.exp, i.coord[0], i.coord[1], i.coord[2], j.ie])
+                for k in range(j.l, 0, -1):
                     molbasis.append([j.n, j.l, k, j.exp, i.coord[0], i.coord[1], i.coord[2], j.ie])
 
+                # for k in range(0, j.l + 1):
+                #     molbasis.append([j.n, j.l, k, j.exp, i.coord[0], i.coord[1], i.coord[2], j.ie])
+                # for k in range(-1 * j.l, 0):
+                #     molbasis.append([j.n, j.l, k, j.exp, i.coord[0], i.coord[1], i.coord[2], j.ie])
+
+        # print("\nBasis Functions")
         # for i in molbasis:
         #     print(i)
 
@@ -679,26 +691,26 @@ class Molecule:
             print("\nHamiltonian Matrix")
             print(hamiltonian)
 
-        eigvalS, eigvecS= np.linalg.eig(overlap)
-        # print(eigvalS)
-        xMatrix = np.zeros((len(molbasis), len(molbasis)))
-        for i in range(0,len(eigvalS)):
-            xMatrix[i][i] = eigvalS[i] ** (-1.0/2.0)
-        # print("\ns^1/2 Matrix")
-        # print(xMatrix)
-        xMatrix = np.dot(np.dot(eigvecS,xMatrix),np.transpose(eigvecS))
-        # print("\nX Matrix")
-        # print(xMatrix)
-
-        # print("\nUnity")
-        # print(np.dot(np.dot(xMatrix,overlap),np.transpose(xMatrix)))
-
-        acthamiltonian = np.dot(np.dot(xMatrix,hamiltonian),np.transpose(xMatrix))
-        print("\nOrthogonalised Hamiltonian Matrix")
-        print(acthamiltonian)
-
-        MOEnergies, transfMOVectors = np.linalg.eig(acthamiltonian)
-        #MOEnergies, transfMOVectors = scipy.linalg.eig(hamiltonian,b=overlap)
+        # eigvalS, eigvecS= np.linalg.eig(overlap)
+        # # print(eigvalS)
+        # xMatrix = np.zeros((len(molbasis), len(molbasis)))
+        # for i in range(0,len(eigvalS)):
+        #     xMatrix[i][i] = eigvalS[i] ** (-1.0/2.0)
+        # # print("\ns^1/2 Matrix")
+        # # print(xMatrix)
+        # xMatrix = np.dot(np.dot(eigvecS,xMatrix),np.transpose(eigvecS))
+        # # print("\nX Matrix")
+        # # print(xMatrix)
+        #
+        # # print("\nUnity")
+        # # print(np.dot(np.dot(xMatrix,overlap),np.transpose(xMatrix)))
+        #
+        # acthamiltonian = np.dot(np.dot(xMatrix,hamiltonian),np.transpose(xMatrix))
+        # # print("\nOrthogonalised Hamiltonian Matrix")
+        # # print(acthamiltonian)
+        #
+        # MOEnergies, transfMOVectors = np.linalg.eig(acthamiltonian)
+        MOEnergies, transfMOVectors = scipy.linalg.eigh(hamiltonian,b=overlap)
         if verbosity >= 3:
             print("\nMO Energies")
             print(MOEnergies)
@@ -827,7 +839,7 @@ extractCoordinates(args.file, hmo_mol, verbosity=args.verbosity)
 #
 # print(hmo_mol)
 # print("Molecular mass = ", hmo_mol.mass())
-hmo_mol.orient()
+#hmo_mol.orient()
 
 hmo_mol.HMOEnergy([0], verbosity=args.verbosity)
 
