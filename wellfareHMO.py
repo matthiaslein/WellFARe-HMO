@@ -711,16 +711,21 @@ class Molecule:
         # Use SciPy algorithm for generalised eigenvalue problem for symmetric matrices to solve
         # HC = SCE, H and S are our input matrices, E holds the energies and C are the coefficients.
         MOEnergies, MOVectors = scipy.linalg.eigh(hamiltonian,b=overlap)
-        if verbosity >= 3:
+
+        # Print MO energies
+        if verbosity >= 2:
             print("\nMO Energies")
             print(MOEnergies)
-            # print("\nMO Vectors (i.e. Coefficients)")
-            # for i in range(0,len(MOVectors)):
-            #     print("\nMO no {}".format(i+1))
-            #     for j in range(0,len(MOVectors)):
-            #         print(" {: .5f}".format(MOVectors[j][i]))
+        if verbosity >= 3:
+            print("\nMO Vectors (i.e. Coefficients)")
+            for i in range(0,len(MOVectors)):
+                print("\nMO no {}".format(i+1))
+                for j in range(0,len(MOVectors)):
+                    print(" {: .5f}".format(MOVectors[j][i]))
 
         energy = 0.0
+        for i in range(0,valence_electrons):
+            energy += MOEnergies[i//2]
 
         return energy
 
@@ -837,9 +842,8 @@ ProgramHeader()
 
 hmo_mol = Molecule("HMO Molecule")
 extractCoordinates(args.file, hmo_mol, verbosity=args.verbosity)
+hmo_mol.orient()
 
-hmo_mol.orient(verbosity=args.verbosity)
-
-hmo_mol.HMOEnergy([0], verbosity=args.verbosity)
+print("\n",hmo_mol.HMOEnergy([0], verbosity=args.verbosity))
 
 ProgramFooter()
