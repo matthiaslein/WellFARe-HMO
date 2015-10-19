@@ -506,15 +506,12 @@ class Molecule:
 
         self.atoms[n].mass = m
 
-    # Discovered that this does something funny to the striucture! Don't use!!
-    def orient(self):
+    def orient(self, verbosity=0):
         """ (Molecule) -> NoneType
 
         Translate centre of mass to coordinate origin and
         (re-)Orient the molecule along the principal axes of inertia.
         """
-
-        ProgramWarning("The .orient() method does something funny! Do not use!")
 
         # The molecular center of mass
         xValue = 0.0
@@ -587,6 +584,17 @@ class Molecule:
             i.coord[1] = vector[1]
             i.coord[2] = vector[2]
 
+        if verbosity == 1:
+            print("\nRe-orienting molecule: {}".format(self.name))
+        elif verbosity == 2:
+            print("\nRe-orienting molecule: {}:".format(self.name))
+            print("Moving center of mass to coordinate origin and aligning principal axes with coordinate axes.")
+        elif verbosity == 3:
+            print("\nRe-orienting molecule: {}:".format(self.name))
+            print("Moving center of mass to coordinate origin and aligning principal axes with coordinate axes.")
+            print("New coordinates:")
+            print(self.gaussString())
+
     def cartesianCoordinates(self):
         """ (Molecule) ->
 
@@ -652,27 +660,21 @@ class Molecule:
         for i in self.atoms:
             valence_electrons += i.valele
             for j in i.basis:
-                # for k in range(-1 * j.l, j.l + 1):
-                #     molbasis.append([j.n, j.l, k, j.exp, i.coord[0], i.coord[1], i.coord[2], j.ie])
-
-                for k in range(0, -1 * j.l -1, -1):
+                for k in range(-1 * j.l, j.l + 1):
                     molbasis.append([j.n, j.l, k, j.exp, i.coord[0], i.coord[1], i.coord[2], j.ie])
-                for k in range(j.l, 0, -1):
-                    molbasis.append([j.n, j.l, k, j.exp, i.coord[0], i.coord[1], i.coord[2], j.ie])
-
-                # for k in range(0, j.l + 1):
-                #     molbasis.append([j.n, j.l, k, j.exp, i.coord[0], i.coord[1], i.coord[2], j.ie])
-                # for k in range(-1 * j.l, 0):
-                #     molbasis.append([j.n, j.l, k, j.exp, i.coord[0], i.coord[1], i.coord[2], j.ie])
 
         if verbosity >= 3:
             print("\nNumber of valence electrons: {}".format(valence_electrons))
-            # print("\nBasis Functions")
+            # print("Basis Functions")
             # for i in molbasis:
             #     print(i)
 
+        # Create overlap matrix
         overlap = np.zeros((len(molbasis), len(molbasis)))
+        # Calculate overlap matrix elements
         for i in range(0, len(molbasis)):
+            # Exploit matrix symmetry by only calculating diagonal and upper triangle, then copying elements
+            # to fill the rest
             for j in range(i, len(molbasis)):
                 overlap[i][j] = wellfareSTO.SlaterOverlapCartesian(molbasis[i][0], molbasis[i][1], molbasis[i][2],
                                                                    molbasis[i][3],
@@ -685,12 +687,15 @@ class Molecule:
 
         if verbosity >= 3:
             print("\nOverlap Matrix")
-            np.set_printoptions(suppress=True)
-            np.set_printoptions(formatter={'float': '{: 0.4f}'.format})
+            np.set_printoptions(formatter={'float': '{: 0.4f}'.format}, suppress=True, linewidth=200)
             print(overlap)
 
+        # Create Hamiltonian matrix
         hamiltonian = np.zeros((len(molbasis), len(molbasis)))
+        # Calculate Hamiltonian matrix elements
         for i in range(0, len(molbasis)):
+            # Exploit matrix symmetry by only calculating diagonal and upper triangle, then copying elements
+            # to fill the rest
             for j in range(i, len(molbasis)):
                 if i == j:
                     # Use Valence State Ionisation Energies for diagonal elements
@@ -703,34 +708,17 @@ class Molecule:
             print("\nHamiltonian Matrix")
             print(hamiltonian)
 
-        # eigvalS, eigvecS= np.linalg.eig(overlap)
-        # # print(eigvalS)
-        # xMatrix = np.zeros((len(molbasis), len(molbasis)))
-        # for i in range(0,len(eigvalS)):
-        #     xMatrix[i][i] = eigvalS[i] ** (-1.0/2.0)
-        # # print("\ns^1/2 Matrix")
-        # # print(xMatrix)
-        # xMatrix = np.dot(np.dot(eigvecS,xMatrix),np.transpose(eigvecS))
-        # # print("\nX Matrix")
-        # # print(xMatrix)
-        #
-        # # print("\nUnity")
-        # # print(np.dot(np.dot(xMatrix,overlap),np.transpose(xMatrix)))
-        #
-        # acthamiltonian = np.dot(np.dot(xMatrix,hamiltonian),np.transpose(xMatrix))
-        # # print("\nOrthogonalised Hamiltonian Matrix")
-        # # print(acthamiltonian)
-        #
-        # MOEnergies, MOVectors = np.linalg.eig(acthamiltonian)
+        # Use SciPy algorithm for generalised eigenvalue problem for symmetric matrices to solve
+        # HC = SCE, H and S are our input matrices, E holds the energies and C are the coefficients.
         MOEnergies, MOVectors = scipy.linalg.eigh(hamiltonian,b=overlap)
         if verbosity >= 3:
             print("\nMO Energies")
             print(MOEnergies)
-            print("\nMO Vectors (i.e. Coefficients)")
-            for i in range(0,len(MOVectors)):
-                print("\nMO no {}".format(i+1))
-                for j in range(0,len(MOVectors)):
-                    print(" {: .5f}".format(MOVectors[j][i]))
+            # print("\nMO Vectors (i.e. Coefficients)")
+            # for i in range(0,len(MOVectors)):
+            #     print("\nMO no {}".format(i+1))
+            #     for j in range(0,len(MOVectors)):
+            #         print(" {: .5f}".format(MOVectors[j][i]))
 
         energy = 0.0
 
@@ -850,11 +838,7 @@ ProgramHeader()
 hmo_mol = Molecule("HMO Molecule")
 extractCoordinates(args.file, hmo_mol, verbosity=args.verbosity)
 
-# print("Number of Atoms: ", hmo_mol.numatoms(), "Multiplicity: ", hmo_mol.mult)
-#
-# print(hmo_mol)
-# print("Molecular mass = ", hmo_mol.mass())
-#hmo_mol.orient()
+hmo_mol.orient(verbosity=args.verbosity)
 
 hmo_mol.HMOEnergy([0], verbosity=args.verbosity)
 

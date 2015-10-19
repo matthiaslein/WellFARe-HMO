@@ -247,19 +247,26 @@ def SlaterOverlapCartesian(n1, l1, m1, zeta1, x1, y1, z1, n2, l2, m2, zeta2, x2,
     x = (x2 - x1) * 1.889725989
     y = (y2 - y1) * 1.889725989
     z = (z2 - z1) * 1.889725989
-    r = np.sqrt((x ** 2) + (y ** 2) + (z ** 2))
-    if x == 0.0:
-        phi = 0.0
-    else:
-        phi = np.arctan2(y, x)
-    if r == 0.0:
-        theta = 0.0
-    else:
-        theta = np.arccos(z / r)
-        # print("")
-        # print("{: .3f} {: .3f} {: .3f}".format(x, y, z))
-        # print("{: .3f} {: .3f} {: .3f}".format(r, np.degrees(theta), np.degrees(phi)))
-        # print("{: .8f} {: .8f} {: .8f}".format(r, theta, phi))
+    xy = x**2 + y**2
+    r = np.sqrt(xy + z**2)
+    theta = np.arctan2(np.sqrt(xy), z) # for elevation angle defined from Z-axis down
+    #theta = np.arctan2(z, np.sqrt(xy)) # for elevation angle defined from XY-plane up
+    phi = np.arctan2(y, x)
+
+    # Old non-working code for Cartesian to Spherical conversion: Don't use
+    # r = np.sqrt((x ** 2) + (y ** 2) + (z ** 2))
+    # if x == 0.0:
+    #     phi = 0.0
+    # else:
+    #     phi = np.arctan2(y, x)
+    # if r == 0.0:
+    #     theta = 0.0
+    # else:
+    #     theta = np.arccos(z / r)
+
+    # print("\nx={: .3f} y={: .3f} z={: .3f}".format(x, y, z))
+    # print("r={: .3f} theta={: .3f} phi={: .3f} (in degrees)".format(r, np.degrees(theta), np.degrees(phi)))
+    # print("r={: .8f} theta={: .8f} phi={: .8f} (in radians)".format(r, theta, phi))
     return SlaterOverlap(n1, l1, m1, zeta1, n2, l2, m2, zeta2, r, theta, phi)
 
 
