@@ -774,11 +774,41 @@ class Molecule:
                                                                    self.atoms[molbasis[j][0]].coord[1],
                                                                    self.atoms[molbasis[j][0]].coord[2])
                 overlap[j][i] = overlap[i][j]
-
         if verbosity >= 3:
+            # Print routine for the overlap matrix
             print("\nOverlap Matrix")
-            np.set_printoptions(formatter={'float': '{: 0.4f}'.format}, suppress=True, linewidth=80)
-            print(overlap)
+            s = [""] * (len(overlap) + 1)
+            for i in range(0, len(overlap)):
+                s[0] += "{: >3}({: >3}){:>2}{}{:<2}".format(self.atoms[molbasis[i][0]].symbol,
+                                                            molbasis[i][0], molbasis[i][1],
+                                                            qn2symb(molbasis[i][2]),
+                                                            qn2symb(molbasis[i][2], molbasis[i][3]))
+                for j in range(0, len(overlap)):
+                    s[i + 1] += "   {: .6f} ".format(overlap[i][j])
+            for i in range(0, len(s[0]), 65):
+                for j in range(0, (len(overlap) + 1)):
+                    if len(s[j]) < (i + 65):
+                        if j == 0:
+                            print("              " + s[j][i:len(s[0])])
+
+                        else:
+                            print("{: >3}({: >3}){:>2}{}{:<2}".format(self.atoms[molbasis[j - 1][0]].symbol,
+                                                                      molbasis[j - 1][0], molbasis[j - 1][1],
+                                                                      qn2symb(molbasis[j - 1][2]),
+                                                                      qn2symb(molbasis[j - 1][2], molbasis[j - 1][3])) +
+                                  s[j][i:len(s[0])])
+
+                    else:
+                        if j == 0:
+                            print("              " + s[j][i:i + 65])
+                        else:
+                            print("{: >3}({: >3}){:>2}{}{:<2}".format(self.atoms[molbasis[j - 1][0]].symbol,
+                                                                      molbasis[j - 1][0], molbasis[j - 1][1],
+                                                                      qn2symb(molbasis[j - 1][2]),
+                                                                      qn2symb(molbasis[j - 1][2], molbasis[j - 1][3])) +
+                                  s[j][i:i + 65])
+                print("")
+
 
         # Create Hamiltonian matrix
         hamiltonian = np.zeros((len(molbasis), len(molbasis)))
@@ -795,8 +825,39 @@ class Molecule:
                     hamiltonian[i][j] = K * overlap[i][j] * ((molbasis[i][5] + molbasis[j][5]) / 2)
                     hamiltonian[j][i] = hamiltonian[i][j]
         if verbosity >= 3:
+            # Print routine for the Hamiltonian matrix
             print("\nHamiltonian Matrix")
-            print(hamiltonian)
+            s = [""] * (len(hamiltonian) + 1)
+            for i in range(0, len(hamiltonian)):
+                s[0] += "{: >3}({: >3}){:>2}{}{:<2}".format(self.atoms[molbasis[i][0]].symbol,
+                                                            molbasis[i][0], molbasis[i][1],
+                                                            qn2symb(molbasis[i][2]),
+                                                            qn2symb(molbasis[i][2], molbasis[i][3]))
+                for j in range(0, len(hamiltonian)):
+                    s[i + 1] += "   {: .6f} ".format(hamiltonian[i][j])
+            for i in range(0, len(s[0]), 65):
+                for j in range(0, (len(hamiltonian) + 1)):
+                    if len(s[j]) < (i + 65):
+                        if j == 0:
+                            print("              " + s[j][i:len(s[0])])
+
+                        else:
+                            print("{: >3}({: >3}){:>2}{}{:<2}".format(self.atoms[molbasis[j - 1][0]].symbol,
+                                                                      molbasis[j - 1][0], molbasis[j - 1][1],
+                                                                      qn2symb(molbasis[j - 1][2]),
+                                                                      qn2symb(molbasis[j - 1][2], molbasis[j - 1][3])) +
+                                  s[j][i:len(s[0])])
+
+                    else:
+                        if j == 0:
+                            print("              " + s[j][i:i + 65])
+                        else:
+                            print("{: >3}({: >3}){:>2}{}{:<2}".format(self.atoms[molbasis[j - 1][0]].symbol,
+                                                                      molbasis[j - 1][0], molbasis[j - 1][1],
+                                                                      qn2symb(molbasis[j - 1][2]),
+                                                                      qn2symb(molbasis[j - 1][2], molbasis[j - 1][3])) +
+                                  s[j][i:i + 65])
+                print("")
 
         # Use SciPy algorithm for generalised eigenvalue problem for symmetric matrices to solve
         # HC = SCE, H and S are our input matrices, E holds the energies and C are the coefficients.
@@ -865,19 +926,7 @@ class Molecule:
                                   s[j][i:i + 60])
                 print("")
 
-
-        # Old code for printing MO vectors. One column for each MO.
-        # if verbosity >= 3:
-        #     print("\nMO Vectors (i.e. Coefficients)")
-        #     for i in range(0, len(MOVectors)):
-        #         print("\n MO no {}".format(i + 1))
-        #         for j in range(0, len(MOVectors)):
-        #             print("{: >3}({: >3}){:>2}{}{:<2} {: .5f}".format(self.atoms[molbasis[j][0]].symbol, molbasis[j][0],
-        #                                                               molbasis[j][1], qn2symb(molbasis[j][2]),
-        #                                                               qn2symb(molbasis[j][2], molbasis[j][3]),
-        #                                                               MOVectors[i][j]))
-
-        # Calculate and print Mulliken Analysis
+        # Calculate and print Mulliken Analysis (not calculated if not printed)
         if verbosity >= 2:
             print("\nMulliken Analysis")
             # First, calculate Mulliken net AO and overlap  populations
@@ -898,14 +947,14 @@ class Molecule:
                             mullikenNetAOandOvlPop[i][j] += 2 * occ * MOVectors[i][k] * MOVectors[j][k] * overlap[i][j]
                         else:
                             mullikenNetAOandOvlPop[i][j] += occ * MOVectors[i][k] * MOVectors[j][k] * overlap[i][j]
-            # Print routine as above for the MO Vectors
+            # Print routine for the net populations
             print("\nMuliken net AO (diagonal) and overlap (off-diagonal) populations")
             s = [""] * (len(mullikenNetAOandOvlPop) + 1)
             for i in range(0, len(mullikenNetAOandOvlPop)):
                 s[0] += "{: >3}({: >3}){:>2}{}{:<2}".format(self.atoms[molbasis[i][0]].symbol,
-                                                                      molbasis[i][0], molbasis[i][1],
-                                                                      qn2symb(molbasis[i][2]),
-                                                                      qn2symb(molbasis[i][2], molbasis[i][3]))
+                                                            molbasis[i][0], molbasis[i][1],
+                                                            qn2symb(molbasis[i][2]),
+                                                            qn2symb(molbasis[i][2], molbasis[i][3]))
                 for j in range(0, len(mullikenNetAOandOvlPop)):
                     s[i + 1] += "   {: .6f} ".format(mullikenNetAOandOvlPop[i][j])
             for i in range(0, len(s[0]), 65):
@@ -913,21 +962,48 @@ class Molecule:
                     if len(s[j]) < (i + 65):
                         if j == 0:
                             print("              " + s[j][i:len(s[0])])
-
                         else:
-                            print("{: >3}({: >3}){:>2}{}{:<2}".format(self.atoms[molbasis[j-1][0]].symbol,
-                                                                      molbasis[j-1][0], molbasis[j-1][1],
-                                                                      qn2symb(molbasis[j-1][2]),
-                                                                      qn2symb(molbasis[j-1][2], molbasis[j-1][3]))+s[j][i:len(s[0])])
-
+                            print("{: >3}({: >3}){:>2}{}{:<2}".format(self.atoms[molbasis[j - 1][0]].symbol,
+                                                                      molbasis[j - 1][0], molbasis[j - 1][1],
+                                                                      qn2symb(molbasis[j - 1][2]),
+                                                                      qn2symb(molbasis[j - 1][2], molbasis[j - 1][3])) +
+                                  s[j][i:len(s[0])])
                     else:
                         if j == 0:
                             print("              " + s[j][i:i + 65])
                         else:
-                            print("{: >3}({: >3}){:>2}{}{:<2}".format(self.atoms[molbasis[j-1][0]].symbol,
-                                                                      molbasis[j-1][0], molbasis[j-1][1],
-                                                                      qn2symb(molbasis[j-1][2]),
-                                                                      qn2symb(molbasis[j-1][2], molbasis[j-1][3]))+s[j][i:i + 65])
+                            print("{: >3}({: >3}){:>2}{}{:<2}".format(self.atoms[molbasis[j - 1][0]].symbol,
+                                                                      molbasis[j - 1][0], molbasis[j - 1][1],
+                                                                      qn2symb(molbasis[j - 1][2]),
+                                                                      qn2symb(molbasis[j - 1][2], molbasis[j - 1][3])) +
+                                  s[j][i:i + 65])
+                print("")
+            # Then, reduce Mulliken net AO and overlap populations to atoms
+            mullikenRedPop = np.zeros((self.numatoms(), self.numatoms()))
+            for i in range(0, len(MOVectors)):
+                for j in range(0, len(MOVectors)):
+                    atom1 = molbasis[i][0]
+                    atom2 = molbasis[j][0]
+                    mullikenRedPop[atom1][atom2] += mullikenNetAOandOvlPop[i][j]
+            # Print routine for the gross populations
+            print("\nMuliken reduced net atomic (diagonal) and bond (off-diagonal) populations")
+            s = [""] * (len(mullikenRedPop) + 1)
+            for i in range(0, len(mullikenRedPop)):
+                s[0] += "   {: >3}({: >3})".format(self.atoms[i].symbol, i)
+                for j in range(0, len(mullikenRedPop)):
+                    s[i + 1] += " {: .6f} ".format(mullikenRedPop[i][j])
+            for i in range(0, len(s[0]), 66):
+                for j in range(0, (len(mullikenRedPop) + 1)):
+                    if len(s[j]) < (i + 66):
+                        if j == 0:
+                            print("      " + s[j][i:len(s[0])])
+                        else:
+                            print("{: >3}({: >3})".format(self.atoms[j - 1].symbol, j - 1) + s[j][i:len(s[0])])
+                    else:
+                        if j == 0:
+                            print("      " + s[j][i:i + 66])
+                        else:
+                            print("{: >3}({: >3})".format(self.atoms[j - 1].symbol, j - 1) + s[j][i:i + 66])
                 print("")
 
         # Return the previously calculated total EHT energy
