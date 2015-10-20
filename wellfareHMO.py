@@ -729,6 +729,7 @@ class Molecule:
           definition at structure specified by the provided cartesian coordinates.
         """
 
+        # Assemble an array that holds information about the basis set.
         molbasis = []
         valence_electrons = 0
         for atomnum, i in enumerate(self.atoms):
@@ -737,16 +738,18 @@ class Molecule:
                 for k in range(-1 * j.l, j.l + 1):
                     molbasis.append([atomnum, j.n, j.l, k, j.exp, j.ie])
 
+        # Print the atomic basis of the calculation in a pretty way (with symbols instead of pure quantum numbers
         if verbosity >= 2 and verbosity < 3:
-            print("Basis Functions")
+            print("\nBasis Functions")
             print("  Atom            exp     VSIE")
             for i in molbasis:
                 print(
                     " {: >3}({: >3}) {:>2}{}{:<2}  {:.4f}  {: .5f}".format(self.atoms[i[0]].symbol, i[0], i[1],
                                                                            qn2symb(i[2]), qn2symb(i[2], i[3]), i[4],
                                                                            i[5]))
+        # Print the atomic basis of the calculation with the quantum numbers themselves shown
         elif verbosity >= 3:
-            print("Basis Functions")
+            print("\nBasis Functions")
             print("  Atom      n   l   m   exp     VSIE")
             for i in molbasis:
                 print(
@@ -799,12 +802,13 @@ class Molecule:
         # HC = SCE, H and S are our input matrices, E holds the energies and C are the coefficients.
         MOEnergies, MOVectors = scipy.linalg.eigh(hamiltonian, b=overlap)
 
+        # Calculate total energy as sum over energies of occupied MOs
         energy = 0.0
         for i in range(0, valence_electrons):
             energy += MOEnergies[i // 2]
 
         # Print MO energies
-        if verbosity >= 2:
+        if verbosity >= 3:
             print("\nMO Energies ({} electrons, total energy {: .5f} hartree)".format(valence_electrons, energy))
             s = ""
             for i in range(0, len(MOEnergies)):
@@ -815,42 +819,54 @@ class Molecule:
                 else:
                     print(s[i:i + 72])
 
+        # Print MO vectors in a pretty way with MO numbers, energies and occupations. Each row is prefixed by the
+        # atomic orbital that controbutes to the MO.
         if verbosity >= 2:
-            print("\nMO Vectors (i.e. Coefficients)")
-            s = [""] * (len(MOVectors) + 2)
+            print("\nMO Vectors")
+            s = [""] * (len(MOVectors) + 3)
             for i in range(0, len(MOVectors)):
-                s[0] += " {:>7} ".format(i + 1)
-                s[1] += " {: .5f}".format(MOEnergies[i])
+                s[0] += " {:>8} ".format(i + 1)
+                s[1] += " {: .6f}".format(MOEnergies[i])
+                if (i * 2) + 1 < valence_electrons:
+                    s[2] += " {:>8} ".format(2)
+                elif (i * 2) + 1 == valence_electrons:
+                    s[2] += " {:>8} ".format(1)
+                else:
+                    s[2] += " {:>8} ".format(0)
                 for j in range(0, len(MOVectors)):
-                    s[i + 2] += " {: .5f}".format(MOVectors[j][i])
-            for i in range(0, len(s[0]), 54):
-                for j in range(0, (len(MOVectors) + 2)):
-                    if len(s[j]) < (i + 54):
+                    s[i + 3] += " {: .6f}".format(MOVectors[i][j])
+            for i in range(0, len(s[0]), 60):
+                for j in range(0, (len(MOVectors) + 3)):
+                    if len(s[j]) < (i + 60):
                         if j == 0:
                             print(" MO number:  " + s[j][i:len(s[0])])
                         elif j == 1:
                             print(" MO energy:  " + s[j][i:len(s[0])])
+                        elif j == 2:
+                            print(" MO occ   :  " + s[j][i:len(s[0])])
                         else:
-                            print("{: >3}({: >3}){:>2}{}{:<2}".format(self.atoms[molbasis[j - 2][0]].symbol,
-                                                                      molbasis[j - 2][0], molbasis[j - 2][1],
-                                                                      qn2symb(molbasis[j - 2][2]),
-                                                                      qn2symb(molbasis[j - 2][2], molbasis[j - 2][3])) +
+                            print("{: >3}({: >3}){:>2}{}{:<2}".format(self.atoms[molbasis[j - 3][0]].symbol,
+                                                                      molbasis[j - 3][0], molbasis[j - 3][1],
+                                                                      qn2symb(molbasis[j - 3][2]),
+                                                                      qn2symb(molbasis[j - 3][2], molbasis[j - 3][3])) +
                                   s[j][i:len(s[0])])
                     else:
                         if j == 0:
-                            print(" MO number:  " + s[j][i:i + 54])
+                            print(" MO number:  " + s[j][i:i + 60])
                         elif j == 1:
-                            print(" MO energy:  " + s[j][i:i + 54])
+                            print(" MO energy:  " + s[j][i:i + 60])
+                        elif j == 2:
+                            print(" MO occ   :  " + s[j][i:i + 60])
                         else:
-                            print("{: >3}({: >3}){:>2}{}{:<2}".format(self.atoms[molbasis[j - 2][0]].symbol,
-                                                                      molbasis[j - 2][0], molbasis[j - 2][1],
-                                                                      qn2symb(molbasis[j - 2][2]),
-                                                                      qn2symb(molbasis[j - 2][2], molbasis[j - 2][3])) +
-                                  s[j][i:i + 54])
+                            print("{: >3}({: >3}){:>2}{}{:<2}".format(self.atoms[molbasis[j - 3][0]].symbol,
+                                                                      molbasis[j - 3][0], molbasis[j - 3][1],
+                                                                      qn2symb(molbasis[j - 3][2]),
+                                                                      qn2symb(molbasis[j - 3][2], molbasis[j - 3][3])) +
+                                  s[j][i:i + 60])
                 print("")
 
 
-
+        # Old code for printing MO vectors. One column for each MO.
         # if verbosity >= 3:
         #     print("\nMO Vectors (i.e. Coefficients)")
         #     for i in range(0, len(MOVectors)):
@@ -859,7 +875,62 @@ class Molecule:
         #             print("{: >3}({: >3}){:>2}{}{:<2} {: .5f}".format(self.atoms[molbasis[j][0]].symbol, molbasis[j][0],
         #                                                               molbasis[j][1], qn2symb(molbasis[j][2]),
         #                                                               qn2symb(molbasis[j][2], molbasis[j][3]),
-        #                                                               MOVectors[j][i]))
+        #                                                               MOVectors[i][j]))
+
+        # Calculate and print Mulliken Analysis
+        if verbosity >= 2:
+            print("\nMulliken Analysis")
+            # First, calculate Mulliken net AO and overlap  populations
+            mullikenNetAOandOvlPop = np.zeros((len(MOVectors), len(MOVectors)))
+            for i in range(0, len(MOVectors)):
+                for j in range(0, len(MOVectors)):
+                    for k in range(0, len(MOVectors)):
+                        # if, elif, else to establish the occupation number for the MO in question.
+                        occ = 0
+                        if ((k + 1) * 2) <= valence_electrons:
+                            occ = 2
+                        elif ((k + 1) * 2) > valence_electrons and (k * 2) < valence_electrons:
+                            occ = 1
+                        else:
+                            occ = 0
+                        # print(i, j, occ * (MOVectors[i][j] ** 2))
+                        if i != j:
+                            mullikenNetAOandOvlPop[i][j] += 2 * occ * MOVectors[i][k] * MOVectors[j][k] * overlap[i][j]
+                        else:
+                            mullikenNetAOandOvlPop[i][j] += occ * MOVectors[i][k] * MOVectors[j][k] * overlap[i][j]
+            # Print routine as above for the MO Vectors
+            print("\nMuliken net AO (diagonal) and overlap (off-diagonal) populations")
+            s = [""] * (len(mullikenNetAOandOvlPop) + 1)
+            for i in range(0, len(mullikenNetAOandOvlPop)):
+                s[0] += "{: >3}({: >3}){:>2}{}{:<2}".format(self.atoms[molbasis[i][0]].symbol,
+                                                                      molbasis[i][0], molbasis[i][1],
+                                                                      qn2symb(molbasis[i][2]),
+                                                                      qn2symb(molbasis[i][2], molbasis[i][3]))
+                for j in range(0, len(mullikenNetAOandOvlPop)):
+                    s[i + 1] += "   {: .6f} ".format(mullikenNetAOandOvlPop[i][j])
+            for i in range(0, len(s[0]), 65):
+                for j in range(0, (len(mullikenNetAOandOvlPop) + 1)):
+                    if len(s[j]) < (i + 65):
+                        if j == 0:
+                            print("              " + s[j][i:len(s[0])])
+
+                        else:
+                            print("{: >3}({: >3}){:>2}{}{:<2}".format(self.atoms[molbasis[j-1][0]].symbol,
+                                                                      molbasis[j-1][0], molbasis[j-1][1],
+                                                                      qn2symb(molbasis[j-1][2]),
+                                                                      qn2symb(molbasis[j-1][2], molbasis[j-1][3]))+s[j][i:len(s[0])])
+
+                    else:
+                        if j == 0:
+                            print("              " + s[j][i:i + 65])
+                        else:
+                            print("{: >3}({: >3}){:>2}{}{:<2}".format(self.atoms[molbasis[j-1][0]].symbol,
+                                                                      molbasis[j-1][0], molbasis[j-1][1],
+                                                                      qn2symb(molbasis[j-1][2]),
+                                                                      qn2symb(molbasis[j-1][2], molbasis[j-1][3]))+s[j][i:i + 65])
+                print("")
+
+        # Return the previously calculated total EHT energy
         return energy
 
 
