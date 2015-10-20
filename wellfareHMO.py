@@ -99,6 +99,7 @@ if not found:
     ProgramAbort()
 import scipy.optimize
 
+
 #############################################################################################################
 # This section is for the definition of *all* constants and conversion factors
 #############################################################################################################
@@ -220,30 +221,67 @@ SymbolToEN = {
 
 # Define dictionary to convert atomic symbols to number of valence electrons
 SymbolToValE = {
-    "H": 1, "He": 2, "Li": 1, "Be": 2, "B": 3, "C": 4,
+    "H": 1, "He": 2, "Li": 1, "Be": 2, "B": 3, "C": 4, "N": 5, "O": 6, "F": 7, "Ne": 8,
+    "Na": 1, "Mg": 2, "Al": 3, "Si": 4, "P": 5, "S": 6, "Cl": 7, "Ar": 8
 }
 
 # Define dictionary to convert atomic symbols to STO exponents for s functions
 SymbolToSTOexpS = {
     "H": 1.200, "He": 1.688, "Li": 0.650, "Be": 0.975, "B": 1.300, "C": 1.625,
+    "N": 1.950, "O": 2.275, "F": 2.425, "Ne": 2.879, "Na": 0.733, "Mg": 1.100,
+    "Al": 1.167, "Si": 1.383, "P": 1.750, "S": 2.122, "Cl": 2.183, "Ar": 2.461,
+
 }
 
 # Define dictionary to convert atomic symbols to STO exponents for p functions
 SymbolToSTOexpP = {
-    "Li": 0.65, "Be": 0.975, "B": 1.300, "C": 1.625,
+    "Li": 0.650, "Be": 0.975, "B": 1.300, "C": 1.625,
+    "N": 1.950, "O": 2.275, "F": 2.425, "Ne": 2.879, "Na": 0.733, "Mg": 1.100,
+    "Al": 1.167, "Si": 1.383, "P": 1.300, "S": 1.827, "Cl": 1.733, "Ar": 2.105,
 }
 
 # Define dictionary to convert atomic symbols to ionisation energies in Extended Hückel Hamiltonians
 # Here for s electrons in hartrees
 SymbolToEHTieS = {
     "H": -0.5000, "He": -0.8599, "Li": -0.1984, "Be": -0.3675, "B": -0.5586, "C": -0.7144,
+    "N": -0.9555, "O": -1.1870, "F": -1.4700, "Ne": -1.5876, "Na": -0.1874, "Mg": -0.3307,
+    "Al": -0.4520, "Si": -0.6358, "P": -0.6835, "S": -0.7350, "Cl": -0.9665, "Ar": -1.2774,
 }
 
 # Define dictionary to convert atomic symbols to ionisation energies in Extended Hückel Hamiltonians
 # Here for p electrons in hartrees
 SymbolToEHTieP = {
     "Li": -0.1286, "Be": -0.2205, "B": -0.3124, "C": -0.3921,
+    "N": -0.4924, "O": -0.5439, "F": -0.6652, "Ne": -0.7350, "Na": -0.1102, "Mg": -0.1654,
+    "Al": -0.2389, "Si": -0.3381, "P": -0.5145, "S": -0.4042, "Cl": -0.5218, "Ar": -0.5910,
 }
+
+# Define dictionary to convert angular momentum quantum numbers to symbols
+L2Symb = {
+    0: "s", 1: "p", 2: "d", 3: "f", 4: "g", 5: "h", 6: "i", 7: "j", 8: "k"
+}
+
+# Define dictionary to convert quantum numbers to symbols for p orbitals
+Porb2Symb = {
+    -1: "x", 0: "z", 1: "y"
+}
+
+# Define dictionary to convert quantum numbers to symbols for d orbitals
+Dorb2Symb = {
+    -2: "xx", -1: "xx", 0: "z2", 1: "yy", 2: "yy"
+}
+
+
+# Function to translate quantum numbers to symbols.
+def qn2symb(l, m=None):
+    if m == None:
+        return L2Symb[l]
+    elif l == 0:
+        return ""
+    elif l == 1:
+        return Porb2Symb[m]
+    elif l == 2:
+        return Dorb2Symb[m]
 
 
 #############################################################################################################
@@ -348,6 +386,42 @@ class Atom:
         elif sym == "C":
             self.basis.append(STO(sym, 2, 0))
             self.basis.append(STO(sym, 2, 1))
+        elif sym == "N":
+            self.basis.append(STO(sym, 2, 0))
+            self.basis.append(STO(sym, 2, 1))
+        elif sym == "O":
+            self.basis.append(STO(sym, 2, 0))
+            self.basis.append(STO(sym, 2, 1))
+        elif sym == "F":
+            self.basis.append(STO(sym, 2, 0))
+            self.basis.append(STO(sym, 2, 1))
+        elif sym == "Ne":
+            self.basis.append(STO(sym, 2, 0))
+            self.basis.append(STO(sym, 2, 1))
+        elif sym == "Na":
+            self.basis.append(STO(sym, 3, 0))
+            self.basis.append(STO(sym, 3, 1))
+        elif sym == "Mg":
+            self.basis.append(STO(sym, 3, 0))
+            self.basis.append(STO(sym, 3, 1))
+        elif sym == "Al":
+            self.basis.append(STO(sym, 3, 0))
+            self.basis.append(STO(sym, 3, 1))
+        elif sym == "Si":
+            self.basis.append(STO(sym, 3, 0))
+            self.basis.append(STO(sym, 3, 1))
+        elif sym == "P":
+            self.basis.append(STO(sym, 3, 0))
+            self.basis.append(STO(sym, 3, 1))
+        elif sym == "S":
+            self.basis.append(STO(sym, 3, 0))
+            self.basis.append(STO(sym, 3, 1))
+        elif sym == "Cl":
+            self.basis.append(STO(sym, 3, 0))
+            self.basis.append(STO(sym, 3, 1))
+        elif sym == "Ar":
+            self.basis.append(STO(sym, 3, 0))
+            self.basis.append(STO(sym, 3, 1))
 
     def __str__(self):
         """ (Atom) -> str
@@ -648,7 +722,7 @@ class Molecule:
         s = s + "\n"
         return s
 
-    def HMOEnergy(self, cartCoordinates, K = 1.75, charge=0, verbosity=0):
+    def HMOEnergy(self, cartCoordinates, K=1.75, charge=0, verbosity=0):
         """ (Molecule) -> number (extended Hueckel aka Tight Binding energy)
 
           Returns a number containing the molecular energy according to the current extended Hueckel aka Tight Binding
@@ -657,17 +731,27 @@ class Molecule:
 
         molbasis = []
         valence_electrons = 0
-        for i in self.atoms:
+        for atomnum, i in enumerate(self.atoms):
             valence_electrons += i.valele
             for j in i.basis:
                 for k in range(-1 * j.l, j.l + 1):
-                    molbasis.append([j.n, j.l, k, j.exp, i.coord[0], i.coord[1], i.coord[2], j.ie])
+                    molbasis.append([atomnum, j.n, j.l, k, j.exp, j.ie])
 
-        if verbosity >= 3:
-            print("\nNumber of valence electrons: {}".format(valence_electrons))
-            # print("Basis Functions")
-            # for i in molbasis:
-            #     print(i)
+        if verbosity >= 2 and verbosity < 3:
+            print("Basis Functions")
+            print("  Atom            exp     VSIE")
+            for i in molbasis:
+                print(
+                    " {: >3}({: >3}) {:>2}{}{:<2}  {:.4f}  {: .5f}".format(self.atoms[i[0]].symbol, i[0], i[1],
+                                                                           qn2symb(i[2]), qn2symb(i[2], i[3]), i[4],
+                                                                           i[5]))
+        elif verbosity >= 3:
+            print("Basis Functions")
+            print("  Atom      n   l   m   exp     VSIE")
+            for i in molbasis:
+                print(
+                    " {: >3}({: >3}) {: >3} {: >3} {: >3}  {:.4f}  {: .5f}".format(self.atoms[i[0]].symbol, i[0], i[1],
+                                                                                   i[2], i[3], i[4], i[5]))
 
         # Create overlap matrix
         overlap = np.zeros((len(molbasis), len(molbasis)))
@@ -676,18 +760,21 @@ class Molecule:
             # Exploit matrix symmetry by only calculating diagonal and upper triangle, then copying elements
             # to fill the rest
             for j in range(i, len(molbasis)):
-                overlap[i][j] = wellfareSTO.SlaterOverlapCartesian(molbasis[i][0], molbasis[i][1], molbasis[i][2],
-                                                                   molbasis[i][3],
-                                                                   molbasis[i][4], molbasis[i][5], molbasis[i][6],
-                                                                   molbasis[j][0],
-                                                                   molbasis[j][1], molbasis[j][2], molbasis[j][3],
-                                                                   molbasis[j][4],
-                                                                   molbasis[j][5], molbasis[j][6])
+                overlap[i][j] = wellfareSTO.SlaterOverlapCartesian(molbasis[i][1], molbasis[i][2], molbasis[i][3],
+                                                                   molbasis[i][4],
+                                                                   self.atoms[molbasis[i][0]].coord[0],
+                                                                   self.atoms[molbasis[i][0]].coord[1],
+                                                                   self.atoms[molbasis[i][0]].coord[2],
+                                                                   molbasis[j][1],
+                                                                   molbasis[j][2], molbasis[j][3], molbasis[j][4],
+                                                                   self.atoms[molbasis[j][0]].coord[0],
+                                                                   self.atoms[molbasis[j][0]].coord[1],
+                                                                   self.atoms[molbasis[j][0]].coord[2])
                 overlap[j][i] = overlap[i][j]
 
         if verbosity >= 3:
             print("\nOverlap Matrix")
-            np.set_printoptions(formatter={'float': '{: 0.4f}'.format}, suppress=True, linewidth=200)
+            np.set_printoptions(formatter={'float': '{: 0.4f}'.format}, suppress=True, linewidth=80)
             print(overlap)
 
         # Create Hamiltonian matrix
@@ -699,10 +786,10 @@ class Molecule:
             for j in range(i, len(molbasis)):
                 if i == j:
                     # Use Valence State Ionisation Energies for diagonal elements
-                    hamiltonian[i][j] = molbasis[i][7]
+                    hamiltonian[i][j] = molbasis[i][5]
                 else:
                     # Use Wolfsberg-Helmholtz for off-diagonal elements
-                    hamiltonian[i][j] = K * overlap[i][j] * ((molbasis[i][7]+molbasis[j][7])/2)
+                    hamiltonian[i][j] = K * overlap[i][j] * ((molbasis[i][5] + molbasis[j][5]) / 2)
                     hamiltonian[j][i] = hamiltonian[i][j]
         if verbosity >= 3:
             print("\nHamiltonian Matrix")
@@ -710,23 +797,69 @@ class Molecule:
 
         # Use SciPy algorithm for generalised eigenvalue problem for symmetric matrices to solve
         # HC = SCE, H and S are our input matrices, E holds the energies and C are the coefficients.
-        MOEnergies, MOVectors = scipy.linalg.eigh(hamiltonian,b=overlap)
+        MOEnergies, MOVectors = scipy.linalg.eigh(hamiltonian, b=overlap)
+
+        energy = 0.0
+        for i in range(0, valence_electrons):
+            energy += MOEnergies[i // 2]
 
         # Print MO energies
         if verbosity >= 2:
-            print("\nMO Energies")
-            print(MOEnergies)
-        if verbosity >= 3:
+            print("\nMO Energies ({} electrons, total energy {: .5f} hartree)".format(valence_electrons, energy))
+            s = ""
+            for i in range(0, len(MOEnergies)):
+                s += " {: .5f}".format(MOEnergies[i])
+            for i in range(0, len(s), 72):
+                if len(s) < (i + 72):
+                    print(s[i:len(s)])
+                else:
+                    print(s[i:i + 72])
+
+        if verbosity >= 2:
             print("\nMO Vectors (i.e. Coefficients)")
-            for i in range(0,len(MOVectors)):
-                print("\nMO no {}".format(i+1))
-                for j in range(0,len(MOVectors)):
-                    print(" {: .5f}".format(MOVectors[j][i]))
+            s = [""] * (len(MOVectors) + 2)
+            for i in range(0, len(MOVectors)):
+                s[0] += " {:>7} ".format(i + 1)
+                s[1] += " {: .5f}".format(MOEnergies[i])
+                for j in range(0, len(MOVectors)):
+                    s[i + 2] += " {: .5f}".format(MOVectors[j][i])
+            for i in range(0, len(s[0]), 54):
+                for j in range(0, (len(MOVectors) + 2)):
+                    if len(s[j]) < (i + 54):
+                        if j == 0:
+                            print(" MO number:  " + s[j][i:len(s[0])])
+                        elif j == 1:
+                            print(" MO energy:  " + s[j][i:len(s[0])])
+                        else:
+                            print("{: >3}({: >3}){:>2}{}{:<2}".format(self.atoms[molbasis[j - 2][0]].symbol,
+                                                                      molbasis[j - 2][0], molbasis[j - 2][1],
+                                                                      qn2symb(molbasis[j - 2][2]),
+                                                                      qn2symb(molbasis[j - 2][2], molbasis[j - 2][3])) +
+                                  s[j][i:len(s[0])])
+                    else:
+                        if j == 0:
+                            print(" MO number:  " + s[j][i:i + 54])
+                        elif j == 1:
+                            print(" MO energy:  " + s[j][i:i + 54])
+                        else:
+                            print("{: >3}({: >3}){:>2}{}{:<2}".format(self.atoms[molbasis[j - 2][0]].symbol,
+                                                                      molbasis[j - 2][0], molbasis[j - 2][1],
+                                                                      qn2symb(molbasis[j - 2][2]),
+                                                                      qn2symb(molbasis[j - 2][2], molbasis[j - 2][3])) +
+                                  s[j][i:i + 54])
+                print("")
 
-        energy = 0.0
-        for i in range(0,valence_electrons):
-            energy += MOEnergies[i//2]
 
+
+        # if verbosity >= 3:
+        #     print("\nMO Vectors (i.e. Coefficients)")
+        #     for i in range(0, len(MOVectors)):
+        #         print("\n MO no {}".format(i + 1))
+        #         for j in range(0, len(MOVectors)):
+        #             print("{: >3}({: >3}){:>2}{}{:<2} {: .5f}".format(self.atoms[molbasis[j][0]].symbol, molbasis[j][0],
+        #                                                               molbasis[j][1], qn2symb(molbasis[j][2]),
+        #                                                               qn2symb(molbasis[j][2], molbasis[j][3]),
+        #                                                               MOVectors[j][i]))
         return energy
 
 
@@ -844,6 +977,6 @@ hmo_mol = Molecule("HMO Molecule")
 extractCoordinates(args.file, hmo_mol, verbosity=args.verbosity)
 hmo_mol.orient()
 
-print("\n",hmo_mol.HMOEnergy([0], verbosity=args.verbosity))
+hmo_mol.HMOEnergy([0], verbosity=args.verbosity)
 
 ProgramFooter()
