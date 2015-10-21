@@ -1005,6 +1005,43 @@ class Molecule:
                         else:
                             print("{: >3}({: >3})".format(self.atoms[j - 1].symbol, j - 1) + s[j][i:i + 66])
                 print("")
+            # Next calculate gross Mulliken AO populations
+            mullikenGrossAOPop = np.zeros(len(MOVectors))
+            for i in range(0, len(mullikenGrossAOPop)):
+                for j in range(0, len(MOVectors)):
+                    if i == j:
+                        mullikenGrossAOPop[i] += mullikenNetAOandOvlPop[i][j]
+                    else:
+                        mullikenGrossAOPop[i] += mullikenNetAOandOvlPop[i][j] / 2.0
+            # Print routine for the gross populations
+            print("\nGross Mulliken AO populations")
+            for i in range(0,len(mullikenGrossAOPop)):
+                print("{: >3}({: >3}){:>2}{}{:<2} {: .6f}".format(self.atoms[molbasis[i][0]].symbol,
+                                                                      molbasis[i][0], molbasis[i][1],
+                                                                      qn2symb(molbasis[i][2]),
+                                                                      qn2symb(molbasis[i][2], molbasis[i][3]), mullikenGrossAOPop[i]))
+            print("")
+            # Next calculate gross Mulliken atom populations
+            mullikenGrossAtomPop = np.zeros(self.numatoms())
+            for i in range(0, len(mullikenGrossAOPop)):
+                mullikenGrossAtomPop[molbasis[i][0]] += mullikenGrossAOPop[i]
+            print("\nGross Mulliken atomic populations")
+            for i in range(0,len(mullikenGrossAtomPop)):
+                print("{: >3}({: >3}) {: .6f}".format(self.atoms[i].symbol,
+                                                                      i, mullikenGrossAtomPop[i]))
+
+            print("")
+            # Next determine Mulliken net atomic charges
+            mullikenNetAtomCharge = np.zeros(self.numatoms())
+            for i in range(0, len(mullikenNetAtomCharge)):
+                mullikenNetAtomCharge[i] += self.atoms[i].valele-mullikenGrossAtomPop[i]
+            print("\nNet Mulliken atomic charges")
+            for i in range(0,len(mullikenGrossAtomPop)):
+                print("{: >3}({: >3}) {: .6f}".format(self.atoms[i].symbol,
+                                                                      i, mullikenNetAtomCharge[i]))
+
+            print("")
+
 
         # Return the previously calculated total EHT energy
         return energy
