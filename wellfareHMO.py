@@ -1,12 +1,11 @@
 #!/usr/local/bin/python3
 
-import sys
-import getopt
-import math
-import time
 import argparse
+import sys
+import time
 from importlib.util import find_spec
-import wellfareSTO
+
+from src import wellfareSTO
 
 
 def timestamp(s):
@@ -1161,6 +1160,6 @@ hmo_mol = Molecule("HMO Molecule")
 extractCoordinates(args.file, hmo_mol, verbosity=args.verbosity)
 hmo_mol.orient()
 
-hmo_mol.HMOEnergy([0], verbosity=args.verbosity)
+print("Total HMO Energy: {:> 16.8f}".format(hmo_mol.HMOEnergy([0], verbosity=args.verbosity)))
 
 ProgramFooter()
